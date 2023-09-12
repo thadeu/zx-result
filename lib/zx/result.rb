@@ -87,18 +87,14 @@ module Zx
 
       self
     end
-    alias Failure failure!
-    alias Failure! failure!
 
-    def success!(value, type: :ok)
+    def success!(value = nil, type: :ok)
       @type = type.to_sym
       @success = true
       @value = value
 
       self
     end
-    alias Success success!
-    alias Success! success!
 
     def __execute__(tag = nil, &block)
       return block.call(@value, [@type, @success]) if tag.nil?
@@ -106,6 +102,14 @@ module Zx
       block.call(@value, [@type, @success]) if @type == tag.to_sym
     end
     private :__execute__
+
+    def Success(value = nil, options = {})
+      success!(value, type: options.fetch(:type, :ok))
+    end
+
+    def Failure(value = nil, options = {})
+      failure!(value, type: options.fetch(:type, :error))
+    end
 
     def self.Success(value = nil, options = {})
       new.success!(value, type: options.fetch(:type, :ok))

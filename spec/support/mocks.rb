@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AsComposition
   include Zx
 
@@ -29,7 +31,7 @@ class AsInherited < Zx::Result
 end
 
 module AsExtended
-  extend module_function
+  extend self
 
   include Zx
   extend Zx
