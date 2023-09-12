@@ -106,8 +106,16 @@ module Zx
     def Success(value = nil, options = {})
       success!(value, type: options.fetch(:type, :ok))
     end
+    
+    def Success!(value = nil, options = {})
+      success!(value, type: options.fetch(:type, :ok))
+    end
 
     def Failure(value = nil, options = {})
+      failure!(value, type: options.fetch(:type, :error))
+    end
+    
+    def Failure!(value = nil, options = {})
       failure!(value, type: options.fetch(:type, :error))
     end
 

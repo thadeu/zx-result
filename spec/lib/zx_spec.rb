@@ -10,9 +10,9 @@ class OrderService < Zx::Result
   def apply(value)
     price = value + (value * @tax)
 
-    return Failure :priceless if price < 100
+    return Failure! :priceless if price < 100
 
-    Success price: price
+    Success! price: price
   end
 end
 
