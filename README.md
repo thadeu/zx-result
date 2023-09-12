@@ -60,6 +60,82 @@ Without configuration, because we use only Ruby. ❤️
 
 ## Usage
 
+
+### Success Type
+
+```ruby
+result = Zx.Success(5)
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 5
+result.value! #=> 5 or raise
+result.error #=> nil or raises an exception
+```
+
+```ruby
+result = Zx.Success(5, type: :integer)
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 5
+result.value! #=> 5 or raise
+result.error #=> nil or raises an exception
+result.type #=> :integer
+```
+
+### Failure Type
+
+```ruby
+result = Zx.Failure(:fizz)
+result.success? #=> false
+result.failure? #=> true
+result.value #=> raises an exception
+result.error #=> :fizz
+result.type #=> :error
+```
+
+```ruby
+result = Zx.Failure(:fizz, type: :not_found)
+result.success? #=> false
+result.failure? #=> true
+result.value #=> raises an exception
+result.error #=> :fizz
+result.type #=> :not_found
+```
+
+### Map or Then
+
+```ruby
+result = Zx.Success(5, type: :integer)
+  .fmap{ |number| number + 5 }
+  .fmap{ |number| number + 5 }
+  .fmap{ |number| number + 5 }
+  .on_success(:integer) {|number| puts number } #=> 20
+  .on(:success, :integer) {|number| puts number } #=> 20
+  .on_success {|number| puts number } #=> 20
+
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 20
+result.value! #=> 20 or raise
+result.error #=> nil or raises a  n exception
+result.type #=> :integer
+```
+
+```ruby
+result = Zx.Success(5, type: :integer)
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .on_success{|number| puts number } #=> 20
+
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 20
+result.value! #=> 20 or raise
+result.error #=> nil or raises an exception
+result.type #=> :integer
+```
+
 You can use one or multiples listeners in your result. We see some use cases.
 
 **Simple composition**

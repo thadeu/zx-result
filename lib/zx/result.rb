@@ -34,7 +34,7 @@ module Zx
     end
 
     def deconstruct_keys(_)
-      { value: value, error: error }
+      { type: type, value: value, error: error }
     end
 
     def on_unknown(&block)
