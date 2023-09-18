@@ -136,6 +136,44 @@ result.error #=> nil or raises an exception
 result.type #=> :integer
 ```
 
+### Step or Check
+
+```ruby
+result = Zx.Success(5, type: :integer)
+  .step{ |number| number + 5 }
+  .on_success(:integer) {|number| puts number } #=> 10
+  .on(:success, :integer) {|number| puts number } #=> 10
+  .on_success {|number| puts number } #=> 10
+
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 10
+result.value! #=> 10 or raise
+result.error #=> nil or raises a  n exception
+result.type #=> :integer
+```
+
+```ruby
+result = Zx.Success(5, type: :integer)
+  .step{ |number| number + 5 }
+  .check { |number| number == 10 }
+  .on_success{|number| puts number } #=> 10
+
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 10
+result.value! #=> 10 or raise
+result.error #=> nil or raises an exception
+result.type #=> :integer
+```
+
+```ruby
+result = Zx.Success(5, type: :integer)
+  .step{ |number| number + 5 }
+  .check { |number| number == 15 }
+  .on_failure{|error| puts error } #=> 10
+```
+
 You can use one or multiples listeners in your result. We see some use cases.
 
 **Simple composition**

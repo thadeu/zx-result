@@ -53,6 +53,43 @@ RSpec.describe Zx do
     end
   end
 
+  context 'using step' do
+    it 'success' do
+      order = OrderService.new(tax: 0.1)
+      result = order.apply(100)
+
+      result
+        .step { |r| r[:price] + 1 }
+        .step { |r| r + 2 }
+        .on_success { expect(_1).to eq(113) }
+        .on_failure { |error| expect(error).to eq(:priceless) }
+    end
+  end
+
+  context 'using check' do
+    it 'success' do
+      order = OrderService.new(tax: 0.1)
+      result = order.apply(100)
+
+      result
+        .step { |r| r[:price] + 1 }
+        .check { |r| r == 111 }
+
+      expect(result.type).to eq(:ok)
+    end
+
+    it 'failure' do
+      order = OrderService.new(tax: 0.1)
+      result = order.apply(100)
+
+      result
+        .step { |r| r[:price] + 1 }
+        .check { |r| r == 112 }
+
+      expect(result.type).to eq(:error)
+    end
+  end
+
   context 'as callable' do
     it 'using Success directly as method' do
       result = Zx.Success(1)

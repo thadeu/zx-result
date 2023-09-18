@@ -71,6 +71,10 @@ module Zx
       fmap(&block)
     end
 
+    def step(&block)
+      fmap(&block)
+    end
+
     def fmap(&block)
       return self if failure?
 
@@ -78,6 +82,12 @@ module Zx
       @value = new_value
 
       self
+    end
+
+    def check(&block)
+      return self if !!block.call(@value)
+
+      failure!
     end
 
     def failure!(value = nil, type: :error)
@@ -106,7 +116,7 @@ module Zx
     def Success(value = nil, options = {})
       success!(value, type: options.fetch(:type, :ok))
     end
-    
+
     def Success!(value = nil, options = {})
       success!(value, type: options.fetch(:type, :ok))
     end
@@ -114,7 +124,7 @@ module Zx
     def Failure(value = nil, options = {})
       failure!(value, type: options.fetch(:type, :error))
     end
-    
+
     def Failure!(value = nil, options = {})
       failure!(value, type: options.fetch(:type, :error))
     end
