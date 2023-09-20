@@ -39,6 +39,8 @@ module Zx
 
     def on_unknown(&block)
       __execute__(nil, &block)
+
+      self
     end
 
     def on_success(tag = nil, &block)
