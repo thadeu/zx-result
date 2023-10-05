@@ -1,21 +1,10 @@
 # frozen_string_literal: true
 
-require 'zx/result'
-
 module Zx
-  module Extendable
-    Success = ->(*kwargs) { Result.Success(*kwargs) }
-    Failure = ->(*kwargs) { Result.Failure(*kwargs) }
-
-    def Success(...)
-      Result.Success(...)
-    end
-
-    def Failure(...)
-      Result.Failure(...)
-    end
-  end
-
-  include Extendable
-  extend Extendable
 end
+
+require 'zeitwerk'
+
+loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
+loader.setup
+loader.eager_load

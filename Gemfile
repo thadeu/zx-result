@@ -10,4 +10,5 @@ group :test do
   gem 'simplecov', require: false
 end
 
+gem 'zeitwerk'
 gem 'rubocop', github: 'rubocop/rubocop', require: false
