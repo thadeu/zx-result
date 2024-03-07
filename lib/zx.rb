@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Zx
+  require 'zx/version'
+  require 'zx/fmap'
+  require 'zx/given'
+  require 'zx/mixin'
+  require 'zx/reflect'
+  require 'zx/result'
 end
-
-require 'zeitwerk'
-
-loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
-loader.setup
-loader.eager_load

@@ -183,6 +183,60 @@ RSpec.describe Zx::Result do
         expect(result.value).to eq(a: 1)
       end
 
+      it '#then' do
+        result = Zx::Result.Success(a: 1)
+
+        result.then { _1[:a] + 1 }
+
+        expect(result.value).to eq(2)
+      end
+
+      it '#and_then' do
+        result = Zx::Result.Success(a: 1)
+
+        result.and_then { _1[:a] + 1 }
+
+        expect(result.value).to eq(2)
+      end
+
+      it '#step' do
+        result = Zx::Result.Success(a: 1)
+
+        result.step { _1[:a] + 1 }
+
+        expect(result.value).to eq(2)
+      end
+
+      it '#fmap' do
+        result = Zx::Result.Success(a: 1)
+
+        result.fmap { _1[:a] + 1 }
+
+        expect(result.value).to eq(2)
+      end
+
+      context '#check' do
+        it 'success' do
+          result = Zx::Result.Success(a: 1)
+
+          result
+            .check { _1[:a] == 1 }
+            .fmap { _1[:a] + 1 }
+
+          expect(result.value).to eq(2)
+        end
+
+        it 'failure' do
+          result = Zx::Result.Success(a: 1)
+
+          result
+            .check { _1[:a] == 2 }
+            .then { _1[:a] + 1 }
+
+          expect(result.value).to eq(nil)
+        end
+      end
+
       it 'using on_success listeners' do
         result = Zx::Result.Success a: 1
 
@@ -206,13 +260,13 @@ RSpec.describe Zx::Result do
 
         expect(result.type).to eq(:valid)
 
-        result.
-          >>(:success, :valid) { expect(_1).to eq(1) }.
-          >>(:success, :user_found) { expect(_1).to eq(2) }
+        result
+          .>>(:success, :valid) { expect(_1).to eq(1) }
+          .>>(:success, :user_found) { expect(_1).to eq(2) }
 
-        result.
-          |(:success, :valid) { expect(_1).to eq(1) }.
-          |(:success, :user_found) { expect(_1).to eq(2) }
+        result
+          .|(:success, :valid) { expect(_1).to eq(1) }
+          .|(:success, :user_found) { expect(_1).to eq(2) }
 
         result
           .on(:success, :valid) { expect(_1).to eq(1) }

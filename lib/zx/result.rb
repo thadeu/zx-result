@@ -29,6 +29,10 @@ module Zx
       @value || raise(FailureError)
     end
 
+    def unwrap
+      @value
+    end
+
     def deconstruct
       [type, value]
     end
@@ -63,6 +67,7 @@ module Zx
       case ontype.to_sym
       when :success then on_success(tag, &block)
       when :failure then on_failure(tag, &block)
+      when :unknown then on_unknown(tag, &block)
       end
     end
     alias >> on
@@ -70,21 +75,11 @@ module Zx
     alias pipe on
 
     def then(&block)
-      fmap(&block)
+      Fmap.call(self, &block)
     end
-
-    def step(&block)
-      fmap(&block)
-    end
-
-    def fmap(&block)
-      return self if failure?
-
-      new_value = block.call @value
-      @value = new_value
-
-      self
-    end
+    alias and_then then
+    alias step then
+    alias fmap then
 
     def check(&block)
       return self if !!block.call(@value)
