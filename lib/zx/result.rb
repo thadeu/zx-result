@@ -103,10 +103,10 @@ module Zx
       self
     end
 
-    include Zx::Mixin
-    extend Zx::Mixin
+    include ::Zx::Mixin
+    extend ::Zx::Mixin
   end
 
-  include Zx::Mixin
-  extend Zx::Mixin
+  include ::Zx::Mixin
+  extend ::Zx::Mixin
 end
