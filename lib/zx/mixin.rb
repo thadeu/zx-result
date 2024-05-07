@@ -2,8 +2,8 @@
 
 module Zx
   module Mixin
-    Success = ->(value = nil, options = {}) { Zx::Result.new.success!(value, options) }
-    Failure = ->(value = nil, options = {}) { Zx::Result.new.failure!(value, options) }
+    Success = ->(value = nil, options = {}) { Success(value, { type: :ok }.merge(options)) }
+    Failure = ->(value = nil, options = {}) { Failure(value, { type: :error }.merge(options)) }
 
     def Success(value = nil, options = {})
       Zx::Result.new.success!(value, type: options.fetch(:type, :ok))
