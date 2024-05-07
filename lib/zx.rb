@@ -6,6 +6,15 @@ require 'zx/reflect'
 require 'zx/result'
 
 module Zx
+  class AbortError < ::RuntimeError
+    attr_reader :type
+  
+    def initialize(message: nil, type: :error)
+      @type = type
+      super(message)
+    end
+  end
+
   module Methods
     Success = ->(value = nil, options = {}) { Zx.Success(value, { type: :ok }.merge(options)) }
     Failure = ->(value = nil, options = {}) { Zx.Failure(value, { type: :error }.merge(options)) }
