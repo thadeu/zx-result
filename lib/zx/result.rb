@@ -102,11 +102,5 @@ module Zx
 
       self
     end
-
-    include ::Zx::Mixins
-    extend ::Zx::Mixins
   end
-
-  include ::Zx::Mixins
-  extend ::Zx::Mixins
 end
