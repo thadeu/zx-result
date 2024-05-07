@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Zx
-  module Mixin
+  module Mixins
     Success = ->(value = nil, options = {}) { Success(value, { type: :ok }.merge(options)) }
     Failure = ->(value = nil, options = {}) { Failure(value, { type: :error }.merge(options)) }
 
