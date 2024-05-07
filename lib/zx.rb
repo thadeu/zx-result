@@ -2,7 +2,6 @@
 
 require 'zx/version'
 require 'zx/fmap'
-require 'zx/given'
 require 'zx/reflect'
 require 'zx/result'
 
@@ -22,5 +21,9 @@ module Zx
     Success[yield]
   rescue StandardError => e
     Failure[default || options.fetch(:or, nil)]
+  end
+
+  def Given(input)
+    Try { input }
   end
 end
