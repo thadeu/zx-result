@@ -27,6 +27,10 @@ unreleased | https://github.com/thadeu/zx-result/blob/main/README.md
 ## Table of Contents <!-- omit in toc -->
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Success](#success)
+    - [Failure](#failure)
+    - [Try](#try)
+    - [Given](#given)
 
 ## Compatibility
 
@@ -60,8 +64,9 @@ Without configuration, because we use only Ruby. ❤️
 
 ## Usage
 
+You can use with many towards.
 
-### Success Type
+### Success
 
 ```ruby
 result = Zx.Success(5)
@@ -82,7 +87,7 @@ result.error #=> nil or raises an exception
 result.type #=> :integer
 ```
 
-### Failure Type
+### Failure
 
 ```ruby
 result = Zx.Failure(:fizz)
@@ -174,6 +179,27 @@ result = Zx.Success(5, type: :integer)
   .on_failure{|error| puts error } #=> 10
 ```
 
+### Try
+
+```ruby
+result = Zx.Try { 5 }
+  .step{ |number| number + 5 }
+  .check { |number| number == 15 }
+  .on_failure{|error| puts error } #=> 10
+```
+
+### Given
+
+```ruby
+input = 5
+
+result = Zx.Given(input)
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .on_success{|number| number }
+```
+
 You can use one or multiples listeners in your result. We see some use cases.
 
 **Simple composition**
@@ -209,7 +235,9 @@ result
 **Simple Inherit**
 
 ```ruby
-class AsInherited < Zx::Result
+class AsInherited
+  include Zx
+
   def pass(...)
     Success(...)
   end
@@ -237,24 +265,15 @@ result
 You can use directly methods, for example:
 
 ```ruby
-Zx::Result.Success(relation)
+Zx.Success(relation)
 
 # or
-
-Zx::Result::Success[relation]
-
-# or
-
 
 Zx::Success[relation]
 ```
 
 ```ruby
-Zx::Result.Failure('error', type: :invalid)
-
-# or
-
-Zx::Result::Failure[:invalid_user, 'user was not found']
+Zx:.Failure('error', type: :invalid)
 
 # or
 
