@@ -102,11 +102,5 @@ module Zx
 
       self
     end
-
-    include Mixin
-    extend Mixin
   end
-
-  include Mixin
-  extend Mixin
 end
