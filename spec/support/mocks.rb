@@ -17,6 +17,8 @@ class AsComposition
 end
 
 class AsInherited < Zx::Result
+  include Zx
+
   def pass(...)
     Success(...)
   end
