@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-require 'zx/eager_load'
+require 'zx'
 
 class UserMailer
+  include Zx
+
   Passthru = ->(input) { input }
 
   def deliver(input)
