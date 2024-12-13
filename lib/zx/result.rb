@@ -11,10 +11,10 @@ module Zx
       @type = nil
     end
 
-    attr_reader :value, :type
+    attr_accessor :value
 
     def error
-      @value unless type == :ok
+      @value unless success?
     end
 
     def success?
@@ -29,8 +29,17 @@ module Zx
       @value || raise(FailureError)
     end
 
+    def type
+      @type
+    end
+
     def unwrap
-      @value
+      if @value.is_a?(Zx::Result)
+        @value = @value.value
+        unwrap
+      else
+        @value
+      end
     end
 
     def deconstruct
@@ -74,8 +83,13 @@ module Zx
     alias | on
     alias pipe on
 
-    def then(&block)
-      Fmap.call(self, &block)
+    def then(method_name = nil, &block)
+      return self if failure?
+
+      caller_value = Caller.get(block, value)
+      @value = Value.deepth(caller_value)
+
+      Value.deepth(self)
     end
     alias and_then then
     alias step then
@@ -87,18 +101,30 @@ module Zx
       failure!
     end
 
-    def failure!(value = nil, type: :error)
-      @type = type.to_sym
+    def failure!(fvalue = nil, options = { type: :error })
+      options = if options.is_a?(Hash)
+                  options
+                elsif options.is_a?(Symbol)
+                  { type: options }
+                end
+
+      @type = options&.fetch(:type, nil)&.to_sym || :error
       @success = false
-      @value = value
+      @value = fvalue
 
       self
     end
 
-    def success!(value = nil, type: :ok)
-      @type = type.to_sym
+    def success!(svalue = nil, options = {})
+      options = if options.is_a?(Hash)
+                  options
+                elsif options.is_a?(Symbol)
+                  { type: options }
+                end
+
+      @type = (options&.delete(:typo) || options&.delete(:_type) || options&.delete(:type) || :ok).to_sym
       @success = true
-      @value = value
+      @value = svalue
 
       self
     end

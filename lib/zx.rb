@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'zx/version'
-require 'zx/fmap'
+require 'zx/parameter'
+require 'zx/caller'
+require 'zx/value'
 require 'zx/reflect'
 require 'zx/result'
 
@@ -20,21 +22,25 @@ module Zx
     Failure = ->(value = nil, options = {}) { Zx.Failure(value, { type: :error }.merge(options)) }
 
     def Success(value = nil, options = {})
-      Zx::Result.new.success!(value, type: options.fetch(:type, :ok))
+      Zx::Result.new.success!(value, options)
     end
 
     def Failure(value = nil, options = {})
-      Zx::Result.new.failure!(value, type: options.fetch(:type, :error))
+      Zx::Result.new.failure!(value, options)
     end
 
-    def Try(default = nil, options = {})
-      Success[yield]
+    def Try(input = nil, options = {})
+      if block_given?
+        Success(yield, options)
+      else
+        Success(input, options)
+      end
     rescue StandardError => _e
-      Failure[default || options.fetch(:or, nil)]
+      Failure(nil || options.delete(:or), options)
     end
 
-    def Given(input)
-      Try { input }
+    def Given(input = nil, options = {})
+      Try(nil, options) { input }
     end
   end
 

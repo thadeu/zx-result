@@ -2,23 +2,44 @@
 
 require 'spec_helper'
 
-class OrderService
-  include Zx
-
-  def initialize(tax: 0.1)
-    @tax = tax
-  end
-
-  def apply(value)
-    price = value + (value * @tax)
-
-    return Failure :priceless if price < 100
-
-    Success price: price
-  end
-end
-
 RSpec.describe Zx do
+  context 'using nested and_then' do
+    context 'when a success exists in the chain' do
+      it 'returns unwrapped value' do
+        result = NestedAndThen.new.call_ok_hash(0)
+
+        expect(result.unwrap).to eq(2)
+      end
+
+      it 'returns the Zx::Result instance' do
+        result = NestedAndThen.new.call_ok_kw
+
+        expect(result).to be_a(Zx::Result)
+        expect(result.value).to eq(2)
+        expect(result.type).to eq(:continue)
+
+        result
+          .on(:success, :ok) { |r| expect(r).to eq(1) }
+          .on(:success, :continue) { |r| expect(r).to eq(2) }
+          .on(:failure, :math) { |r| expect(r).to eq(3) }
+      end
+    end
+
+    context 'when a failure exists in the chain' do
+      it 'stop flow and then return the failure step' do
+        result = NestedAndThen.new.call_failure1
+
+        expect(result).to eq('error 1')
+      end
+
+      it 'stop flow and then return the failure step' do
+        result = NestedAndThen.new.call_failure2
+
+        expect(result).to eq('error 2')
+      end
+    end
+  end
+
   context 'order service use case' do
     it 'success' do
       order = OrderService.new(tax: 0.1)
