@@ -49,7 +49,7 @@ Style/FrozenStringLiteralComment:
 AllCops:
   DisabledByDefault: false
   NewCops: enable
-  TargetRubyVersion: 2.7.6
+  TargetRubyVersion: 3.3
   # Exclude:
   #   - 'spec/factories/*.rb'
   #   - *.gemspec
