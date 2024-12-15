@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gemspec
 
-ruby File.read('.ruby-version').strip
+ruby '>= 2.7'
 
 group :development, :test do
   gem 'bundler', '>= 1.14'
