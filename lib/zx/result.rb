@@ -31,12 +31,7 @@ module Zx
     end
 
     def unwrap
-      if @value.is_a?(Result)
-        @value = @value.value
-        unwrap
-      else
-        @value
-      end
+      Value.deepth(@value)
     end
     alias to_s unwrap
 
