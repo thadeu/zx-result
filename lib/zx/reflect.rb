@@ -10,9 +10,10 @@ module Zx
     end
 
     def apply(&block)
-      return block.call(result.value, [result.type, result.success?]) if tag.nil?
+      return if !tag.nil? && result.type != tag.to_sym
 
-      block.call(result.value, [result.type, result.success?]) if result.type == tag.to_sym
+      block.call(result.value, [result.type, result.success?])
+      result.executed << block
     end
 
     def self.apply(result, tag, &block)

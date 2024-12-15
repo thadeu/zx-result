@@ -15,6 +15,14 @@ class NestedAndThen
       .and_then(&method(:ok2_kw))
   end
 
+  def call_failure_no_unwrap
+    Try(self)
+      .and_then(&method(:ok1))
+      .and_then(&method(:failure1))
+      .and_then(&method(:failure2))
+      .and_then(&method(:ok2))
+  end
+
   def call_failure1
     Try(self)
       .and_then(&method(:ok1))
@@ -37,15 +45,15 @@ class NestedAndThen
     Failure(Failure(Failure('error 1', :error1), :error1), :error1)
   end
 
-  def failure2(*) = Failure('error 2', type: :error2)
+  def failure2(*); Failure('error 2', type: :error2); end
 
-  def ok1 = Success(1, type: :ok)
+  def ok1; Success(1, type: :ok); end
 
-  def ok2 = Success(1, type: :ok)
+  def ok2; Success(1, type: :ok); end
 
-  def ok1_return_hash = Success({ above: 1 })
+  def ok1_return_hash; Success({ above: 1 }); end
 
-  def ok1_return_kw = Success(above: 1)
+  def ok1_return_kw; Success(above: 1); end
 
   def ok2_kw(above:)
     if above == 1

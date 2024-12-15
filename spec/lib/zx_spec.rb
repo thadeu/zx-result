@@ -8,7 +8,7 @@ RSpec.describe Zx do
       it 'returns unwrapped value' do
         result = NestedAndThen.new.call_ok_hash(0)
 
-        expect(result.unwrap).to eq(2)
+        expect(result.value!).to eq(2)
       end
 
       it 'returns the Zx::Result instance' do
@@ -19,9 +19,83 @@ RSpec.describe Zx do
         expect(result.type).to eq(:continue)
 
         result
-          .on(:success, :ok) { |r| expect(r).to eq(1) }
+          .on(:failure, :math) { raise [:failure, _1] }
+          .on(:success, :jump1) { raise [:jump1, _1] }
           .on(:success, :continue) { |r| expect(r).to eq(2) }
-          .on(:failure, :math) { |r| expect(r).to eq(3) }
+      end
+
+      it 'returns the Zx::Result otherwise' do
+        result = NestedAndThen.new.call_ok_kw
+
+        expect(result).to be_a(Zx::Result)
+
+        result
+          .on_failure(:jump1) { raise [:jump1, _1] }
+          .on_failure(:jump2) { raise [:jump2, _1] }
+          .on_success(:jump3) { raise [:jump3, _1] }
+          .otherwise { expect(_1).to eq(2) }
+      end
+
+      context '.match' do
+        it 'block without argument like JS' do
+          result = NestedAndThen.new.call_ok_kw
+
+          expect(result).to be_a(Zx::Result)
+
+          OkBlock = lambda do |v, type|
+            expect(v).to eq(2)
+            { success: true, value: v }
+          end
+
+          matches = {
+            Ok: OkBlock,
+            Err: ->(err) { raise [:err, err] }
+          }
+
+          matched = result.match(**matches)
+
+          expect(matched[:success]).to be_truthy
+          expect(matched[:value]).to eq(2)
+        end
+
+        it 'block without argument like JS' do
+          result = NestedAndThen.new.call_ok_kw
+
+          expect(result).to be_a(Zx::Result)
+
+          result.match(
+            Ok: ->(v) { expect(v).to eq(2) },
+            Err: ->(err) { raise [:err, err] }
+          )
+        end
+
+        it 'block Err with method argument' do
+          result = NestedAndThen.new.call_ok_kw
+
+          expect(result).to be_a(Zx::Result)
+
+          result.match(
+            Ok: -> { expect(_1).to eq(2) },
+            Err: -> { raise [:err, _1] }
+          )
+        end
+
+        it 'block with method argument' do
+          result = NestedAndThen.new.call_failure_no_unwrap
+
+          expect(result).to be_a(Zx::Result)
+
+          def expected_error(err, type = nil)
+            expect(type).to eq(:error1)
+            expect(err).not_to be_nil
+            expect(err).to eq('error 1')
+          end
+
+          result.match(
+            Ok: -> { raise [:ok, _1] },
+            Err: ->(err, type) { expected_error(err, type) }
+          )
+        end
       end
     end
 
@@ -251,6 +325,7 @@ RSpec.describe Zx do
         .on_failure(:error) { expect(_1).to eq('invalid type tagged') }
         .on_failure(:invalid) { expect(_1).to eq('invalid') }
         .on_failure { expect(_1).to eq('invalid type tagged') }
+        .otherwise { raise [:otherwise, _1] }
     end
 
     it 'using on_failure listeners' do
@@ -393,14 +468,6 @@ RSpec.describe Zx do
         expect(result.type).to eq(:valid)
 
         result
-          .>>(:success, :valid) { expect(_1).to eq(1) }
-          .>>(:success, :user_found) { expect(_1).to eq(2) }
-
-        result
-          .|(:success, :valid) { expect(_1).to eq(1) }
-          .|(:success, :user_found) { expect(_1).to eq(2) }
-
-        result
           .on(:success, :valid) { expect(_1).to eq(1) }
           .on(:success, :user_found) { expect(_1).to eq(2) }
 
@@ -451,5 +518,13 @@ RSpec.describe Zx do
         expect(result.value).to eq('invalid')
       end
     end
+  end
+
+  it 'raised FailureError' do
+    result = NestedAndThen.new.call_ok_hash(0)
+
+    result.check { |v| v == 0 }
+
+    expect { result.value! }.to raise_error(Zx::Result::FailureError)
   end
 end

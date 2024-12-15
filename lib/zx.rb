@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'zx/version'
+require 'zx/match'
 require 'zx/parameter'
 require 'zx/caller'
 require 'zx/value'

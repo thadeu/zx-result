@@ -4,8 +4,18 @@ module Zx
   module Parameter
     extend self
 
+    def self.arity(object)
+      if object.respond_to?(:arity)
+        object.arity
+      elsif object.respond_to?(:call)
+        object.method(:call).parameters.size
+      else
+        0
+      end
+    end
+
     def self.arity?(object)
-      object.arity != 0
+      arity(object) != 0
     end
 
     def self.kwargs?(object)

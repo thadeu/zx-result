@@ -5,13 +5,14 @@ module Zx
     class FailureError < StandardError; end
 
     def initialize
-      @value = nil
       @success = true
-      @exception = false
-      @type = nil
     end
 
-    attr_accessor :value
+    attr_reader :type, :value
+
+    def executed
+      @executed ||= Set.new
+    end
 
     def error
       @value unless success?
@@ -26,21 +27,18 @@ module Zx
     end
 
     def value!
-      @value || raise(FailureError)
-    end
-
-    def type
-      @type
+      @value || raise(FailureError, 'value is empty')
     end
 
     def unwrap
-      if @value.is_a?(Zx::Result)
+      if @value.is_a?(Result)
         @value = @value.value
         unwrap
       else
         @value
       end
     end
+    alias to_s unwrap
 
     def deconstruct
       [type, value]
@@ -79,11 +77,19 @@ module Zx
       when :unknown then on_unknown(tag, &block)
       end
     end
-    alias >> on
-    alias | on
     alias pipe on
 
-    def then(method_name = nil, &block)
+    def match(**kwargs)
+      Match.new(result: self, **kwargs).check!
+    end
+
+    def otherwise(&block)
+      return if executed.size.positive?
+
+      Reflect.apply(self, nil, &block)
+    end
+
+    def then(&block)
       return self if failure?
 
       caller_value = Caller.get(block, value)
@@ -96,37 +102,37 @@ module Zx
     alias fmap then
 
     def check(&block)
-      return self if !!block.call(@value)
+      return self if !!block[@value]
 
       failure!
     end
 
     def failure!(fvalue = nil, options = { type: :error })
-      options = if options.is_a?(Hash)
-                  options
-                elsif options.is_a?(Symbol)
-                  { type: options }
-                end
+      options = extracted_options(options)
 
-      @type = options&.fetch(:type, nil)&.to_sym || :error
+      @type = (options&.delete(:type) || :error)&.to_sym
       @success = false
       @value = fvalue
 
-      self
+      Value.deepth(self)
     end
 
     def success!(svalue = nil, options = {})
-      options = if options.is_a?(Hash)
-                  options
-                elsif options.is_a?(Symbol)
-                  { type: options }
-                end
+      options = extracted_options(options)
 
-      @type = (options&.delete(:typo) || options&.delete(:_type) || options&.delete(:type) || :ok).to_sym
+      @type = (options&.delete(:type) || :ok).to_sym
       @success = true
       @value = svalue
 
-      self
+      Value.deepth(self)
+    end
+
+    def extracted_options(options)
+      if options.is_a?(Hash)
+        options
+      elsif options.is_a?(Symbol)
+        { type: options }
+      end
     end
   end
 end
