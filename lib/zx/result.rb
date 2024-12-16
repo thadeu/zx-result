@@ -41,11 +41,11 @@ module Zx
     end
 
     def last
-      Core::Value.last(self) || self
+      Core::Stack.last(self) || self
     end
 
     def first
-      Core::Value.first(self) || self
+      Core::Stack.first(self) || self
     end
 
     def inspect

@@ -2,7 +2,7 @@
 
 module Zx
   module Core
-    class Value
+    class Stack
       def self.first(result)
         new.first(result)
       end
@@ -15,25 +15,25 @@ module Zx
         new.unwrap!(object)
       end
 
-      def self.stack(object)
+      def self.nodes(object)
         new.stack(object, [])
       end
 
-      def stack(object, list = [])
+      def nodes(object, list = [])
         if need_recursion? object
           list << object
-          stack(object.value, list)
+          nodes(object.value, list)
         end
 
         Array(list).flatten
       end
 
       def first(object)
-        Array(stack(object)).flatten.first
+        Array(nodes(object)).flatten.first
       end
 
       def last(object)
-        Array(stack(object)).flatten.last
+        Array(nodes(object)).flatten.last
       end
 
       def unwrap!(object)

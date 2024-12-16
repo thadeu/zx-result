@@ -14,7 +14,7 @@ module Zx
       end
 
       def spawn!(&block)
-        lastly = Core::Value.last(result)
+        lastly = Core::Stack.last(result)
 
         success = result.success?
         type = result.type
