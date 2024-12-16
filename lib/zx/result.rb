@@ -33,7 +33,7 @@ module Zx
     end
 
     def value!
-      unwrap || raise(FailureError, 'value is empty')
+      last&.value || raise(FailureError, 'value is empty')
     end
 
     def unwrap
@@ -50,8 +50,8 @@ module Zx
 
     def inspect
       format(
-        '#<%<class_name>s success=%<success>s type=%<type>p value=%<value>p>',
-        class_name: self.class.name,
+        '#<%<name>s success=%<success>s type=%<type>p value=%<value>p>',
+        name: self.class.name,
         success: last.success?,
         type: last.type,
         value: last.unwrap
