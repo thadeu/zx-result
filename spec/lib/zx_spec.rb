@@ -3,7 +3,117 @@
 require 'spec_helper'
 
 RSpec.describe Zx do
+  describe 'Try' do
+    context 'with block' do
+      it 'success' do
+        result = Zx.Try { 1 }
+
+        expect(result.value).to eq(1)
+        expect(result.success?).to be_truthy
+        expect(result.type).to eq(:ok)
+      end
+
+      it 'failure' do
+        result = Zx.Try { Failure(1) }
+
+        expect(result.value).to be_nil
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+
+      it 'raise with failure' do
+        result = Zx.Try { raise Failure(1) }
+
+        expect(result.value).to be_nil
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+
+      it 'raise with failure and fallback' do
+        result = Zx.Try(nil, or: 1) { raise Failure(1) }
+
+        expect(result.value).to eq(1)
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+    end
+
+    context 'without block' do
+      it 'success' do
+        result = Zx.Try(1)
+
+        expect(result.value).to eq(1)
+        expect(result.success?).to be_truthy
+        expect(result.type).to eq(:ok)
+      end
+    end
+  end
+
+  describe 'Given' do
+    context 'with block' do
+      it 'success' do
+        result = Zx.Given { Zx.Success(Zx.Success(Zx.Success(1))) }
+
+        result
+          .on(:success, :ok) { expect(_1).to eq(1) }
+          .on(:failure, :error) { expect(_1).not_to be_nil }
+
+        expect(result.unwrap).to eq(1)
+        expect(result.success?).to be_truthy
+        expect(result.type).to eq(:ok)
+      end
+
+      it 'failure' do
+        result = Zx.Given { Failure(1) }
+
+        expect(result.value).to be_nil
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+
+      it 'raise with failure' do
+        result = Zx.Given { raise Failure(1) }
+
+        expect(result.value).to be_nil
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+
+      it 'raise with failure and fallback' do
+        result = Zx.Given(nil, or: 1) { raise Failure(1) }
+
+        expect(result.value).to eq(1)
+        expect(result.success?).to be_falsey
+        expect(result.type).to eq(:error)
+      end
+    end
+
+    context 'without block' do
+      it 'success' do
+        result = Zx.Given(1)
+
+        expect(result.value).to eq(1)
+        expect(result.success?).to be_truthy
+        expect(result.type).to eq(:ok)
+      end
+    end
+  end
+
   context 'using nested and_then' do
+    it 'keep the last result type in the tree' do
+      ok1 = Zx.Success(1)
+      fail1 = Zx.Failure(ok1, type: :catched)
+
+      ok2 = Zx.Success(2)
+      fail2 = Zx.Failure(ok2, type: :failed)
+
+      expect([fail1.unwrap, fail2.unwrap]).to eq([1, 2])
+
+      # The Zx.Success was the last result that we found it
+      # Even if the first result was a Zx.Failure
+      expect([fail1.type, fail2.type]).to eq(%i(ok ok))
+    end
+
     context 'when a success exists in the chain' do
       it 'returns unwrapped value' do
         result = NestedAndThen.new.call_ok_hash(0)
@@ -115,6 +225,18 @@ RSpec.describe Zx do
   end
 
   context 'order service use case' do
+    it 'nested failure and success' do
+      order = OrderService.new(tax: 0.1)
+      result = order.apply_nested(100)
+
+      result
+        .and_then { |price| Zx.Success(price) }
+
+      expect(result.type).to eq(:priceless_1)
+      expect(result.value).to eq(0)
+      expect(result.success?).to be_falsey
+    end
+
     it 'success' do
       order = OrderService.new(tax: 0.1)
       result = order.apply(100)
@@ -142,11 +264,23 @@ RSpec.describe Zx do
     it 'success' do
       order = OrderService.new(tax: 0.1)
       result = order.apply(100)
+      result2 = order.apply(100)
+      result3 = order.apply(100)
 
       result
         .fmap { |r| r[:price] + 1 }
         .on_success { expect(_1).to eq(111) }
-        .on_failure { |error| expect(error).to eq(:priceless) }
+        .on_failure { |error| expect(error).not_to eq(:priceless) }
+
+      result2
+        .fmap { |r| Zx.Success(r[:price] + 1) }
+        .on_success { expect(_1).to eq(111) }
+        .on_failure { |error| expect(error).not_to eq(:priceless) }
+
+      # result3
+      #   .fmap { |r| Zx.Failure(Zx.Success(r[:price] + 1)) }
+      #   .on_success { expect(_1).not_to eq(111) }
+      #   .on_failure { |error| expect(error).to eq(111) }
     end
   end
 

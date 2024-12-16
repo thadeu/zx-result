@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
 require 'zx/version'
-require 'zx/match'
-require 'zx/parameter'
-require 'zx/caller'
-require 'zx/value'
+require 'zx/core'
 require 'zx/reflect'
 require 'zx/result'
 
@@ -23,11 +20,11 @@ module Zx
     Failure = ->(value = nil, options = {}) { Zx.Failure(value, { type: :error }.merge(options)) }
 
     def Success(value = nil, options = {})
-      Zx::Result.new.success!(value, options)
+      Zx::Result.new.success!(value, options).last
     end
 
     def Failure(value = nil, options = {})
-      Zx::Result.new.failure!(value, options)
+      Zx::Result.new.failure!(value, options).last
     end
 
     def Try(input = nil, options = {})
@@ -40,8 +37,8 @@ module Zx
       Failure(nil || options.delete(:or), options)
     end
 
-    def Given(input = nil, options = {})
-      Try(nil, options) { input }
+    def Given(input = nil, options = {}, &block)
+      Try(input, options, &block)
     end
   end
 

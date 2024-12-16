@@ -8,8 +8,6 @@ module Zx
       @success = true
     end
 
-    attr_reader :type, :value
-
     def executed
       @executed ||= Set.new
     end
@@ -26,14 +24,40 @@ module Zx
       !success?
     end
 
+    def type
+      @type ||= last.type
+    end
+
+    def value
+      @value || nil
+    end
+
     def value!
-      @value || raise(FailureError, 'value is empty')
+      unwrap || raise(FailureError, 'value is empty')
     end
 
     def unwrap
-      Value.deepth(@value)
+      last.value
     end
-    alias to_s unwrap
+
+    def last
+      Core::Value.last(self) || self
+    end
+
+    def first
+      Core::Value.first(self) || self
+    end
+
+    def inspect
+      format(
+        '#<%<class_name>s success=%<success>s type=%<type>p value=%<value>p>',
+        class_name: self.class.name,
+        success: last.success?,
+        type: last.type,
+        value: last.unwrap
+      )
+    end
+    alias to_s inspect
 
     def deconstruct
       [type, value]
@@ -75,7 +99,7 @@ module Zx
     alias pipe on
 
     def match(**kwargs)
-      Match.new(result: self, **kwargs).check!
+      Core::Match.new(result: self, **kwargs).check!
     end
 
     def otherwise(&block)
@@ -85,12 +109,9 @@ module Zx
     end
 
     def then(&block)
-      return self if failure?
+      @value, @type, @success = Core::AndThen.spawn(self, &block)
 
-      caller_value = Caller.get(block, value)
-      @value = Value.deepth(caller_value)
-
-      Value.deepth(self)
+      self
     end
     alias and_then then
     alias step then
@@ -109,7 +130,7 @@ module Zx
       @success = false
       @value = fvalue
 
-      Value.deepth(self)
+      self
     end
 
     def success!(svalue = nil, options = {})
@@ -119,7 +140,7 @@ module Zx
       @success = true
       @value = svalue
 
-      Value.deepth(self)
+      self
     end
 
     def extracted_options(options)

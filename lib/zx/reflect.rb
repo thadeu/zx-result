@@ -12,7 +12,7 @@ module Zx
     def apply(&block)
       return if !tag.nil? && result.type != tag.to_sym
 
-      block.call(result.value, [result.type, result.success?])
+      block.call(result.unwrap, [result.type, result.success?])
       result.executed << block
     end
 
