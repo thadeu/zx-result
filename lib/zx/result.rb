@@ -2,12 +2,12 @@
 
 module Zx
   class Result < Core::Base
-    def last
-      Core::Stack.last(self) || self
-    end
-
     def first
       Core::Stack.first(self) || self
+    end
+
+    def last
+      Core::Stack.last(self) || self
     end
 
     def on_unknown(&block)
