@@ -49,7 +49,7 @@ bundle add zx-result
 or add this line to your application's Gemfile.
 
 ```ruby
-gem 'zx-result', '~> 0.1.0'
+gem 'zx-result'
 ```
 
 and then, require module
