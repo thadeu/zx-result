@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require 'zx/core/util/parameter'
-require 'zx/core/base'
-require 'zx/core/and_then'
-require 'zx/core/caller'
-require 'zx/core/match'
-require 'zx/core/stack'
-
-module Core
+module Zx
+  module Core
+    require_relative 'core/util/parameter'
+    require_relative 'core/base'
+    require_relative 'core/and_then'
+    require_relative 'core/caller'
+    require_relative 'core/match'
+    require_relative 'core/stack'
+  end
 end
