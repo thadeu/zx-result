@@ -2,6 +2,12 @@
 
 require 'zx/version'
 require 'zx/core'
+require 'zx/core/util/parameter'
+require 'zx/core/base'
+require 'zx/core/and_then'
+require 'zx/core/caller'
+require 'zx/core/match'
+require 'zx/core/stack'
 require 'zx/reflect'
 require 'zx/result'
 
