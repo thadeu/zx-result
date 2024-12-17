@@ -1,70 +1,13 @@
 # frozen_string_literal: true
 
 module Zx
-  class Result
-    class FailureError < StandardError; end
-
-    def initialize
-      @success = true
-    end
-
-    def executed
-      @executed ||= Set.new
-    end
-
-    def error
-      @value unless success?
-    end
-
-    def success?
-      !!@success
-    end
-
-    def failure?
-      !success?
-    end
-
-    def type
-      @type ||= last.type
-    end
-
-    def value
-      @value || nil
-    end
-
-    def value!
-      last&.value || raise(FailureError, 'value is empty')
-    end
-
-    def unwrap
-      last.value
-    end
-
+  class Result < Core::Base
     def last
       Core::Stack.last(self) || self
     end
 
     def first
       Core::Stack.first(self) || self
-    end
-
-    def inspect
-      format(
-        '#<%<name>s success=%<success>s type=%<type>p value=%<value>p>',
-        name: self.class.name,
-        success: last.success?,
-        type: last.type,
-        value: last.unwrap
-      )
-    end
-    alias to_s inspect
-
-    def deconstruct
-      [type, value]
-    end
-
-    def deconstruct_keys(_)
-      { type: type, value: value, error: error }
     end
 
     def on_unknown(&block)
@@ -124,7 +67,7 @@ module Zx
     end
 
     def failure!(fvalue = nil, options = { type: :error })
-      options = extracted_options(options)
+      options = extracted_options!(options)
 
       @type = (options&.delete(:type) || :error)&.to_sym
       @success = false
@@ -134,7 +77,7 @@ module Zx
     end
 
     def success!(svalue = nil, options = {})
-      options = extracted_options(options)
+      options = extracted_options!(options)
 
       @type = (options&.delete(:type) || :ok).to_sym
       @success = true
@@ -143,12 +86,15 @@ module Zx
       self
     end
 
-    def extracted_options(options)
-      if options.is_a?(Hash)
-        options
-      elsif options.is_a?(Symbol)
-        { type: options }
-      end
+    def inspect
+      format(
+        '#<%<name>s success=%<success>s type=%<type>p value=%<value>p>',
+        name: self.class.name,
+        success: last.success?,
+        type: last.type,
+        value: last.unwrap
+      )
     end
+    alias to_s inspect
   end
 end

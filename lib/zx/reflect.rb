@@ -2,18 +2,21 @@
 
 module Zx
   class Reflect
-    attr_accessor :result, :tag
+    attr_reader :result, :tag
 
     def initialize(result, tag)
-      self.result = result
-      self.tag = tag
+      @result = result
+      @tag = tag
     end
 
     def apply(&block)
-      return if !tag.nil? && result.type != tag.to_sym
+      case tag
+      when Symbol, String
+        return if result.type != tag.to_sym
 
-      block.call(result.unwrap, [result.type, result.success?])
-      result.executed << block
+        block.call(result.unwrap, [result.type, result.success?])
+        result.executed << block
+      end
     end
 
     def self.apply(result, tag, &block)
