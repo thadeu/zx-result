@@ -4,7 +4,7 @@ require 'simplecov'
 
 SimpleCov.start do
   enable_coverage :branch
-  add_filter %r{^/(spec)/}
+  add_filter %r{^/(spec/lib)/}
 end
 
 require 'byebug'

@@ -49,10 +49,10 @@ Style/FrozenStringLiteralComment:
 AllCops:
   DisabledByDefault: false
   NewCops: enable
-  TargetRubyVersion: 2.7.6
-  # Exclude:
-  #   - 'spec/factories/*.rb'
-  #   - *.gemspec
+  TargetRubyVersion: '3.3'
+  Exclude:
+    - 'spec/factories/*.rb'
+    - '*.gemspec'
 
 Lint/AmbiguousBlockAssociation:
   Exclude:
@@ -68,3 +68,21 @@ Style/PercentLiteralDelimiters:
 
 Lint/DeprecatedConstants:
   Enabled: true
+
+Style/AccessorGrouping:
+  Enabled: false
+
+Style/BlockForwarding:
+  Enabled: false
+
+Style/ArgumentsForwarding:
+  Enabled: false
+
+Style/HashSyntax:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Lint/ConstantDefinitionInBlock:
+  Enabled: false

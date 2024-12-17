@@ -1,44 +1,19 @@
 # frozen_string_literal: true
 
 module Zx
-  class Result
+  class Result < Core::Base
     class FailureError < StandardError; end
 
-    def initialize
-      @value = nil
-      @success = true
-      @exception = false
-      @type = nil
-    end
-
-    attr_reader :value, :type
-
-    def error
-      @value unless type == :ok
-    end
-
-    def success?
-      !!@success
-    end
-
-    def failure?
-      !success?
-    end
-
     def value!
-      @value || raise(FailureError)
+      last&.value || raise(FailureError, 'value is empty')
     end
 
-    def unwrap
-      @value
+    def first
+      Core::Stack.first(self) || self
     end
 
-    def deconstruct
-      [type, value]
-    end
-
-    def deconstruct_keys(_)
-      { type: type, value: value, error: error }
+    def last
+      Core::Stack.last(self) || self
     end
 
     def on_unknown(&block)
@@ -70,37 +45,64 @@ module Zx
       when :unknown then on_unknown(tag, &block)
       end
     end
-    alias >> on
-    alias | on
     alias pipe on
 
+    def match(**kwargs)
+      Core::Match.new(result: self, **kwargs).check!
+    end
+
+    def otherwise(&block)
+      return self if executed.size.positive?
+
+      Reflect.apply(self, nil, &block)
+
+      self
+    end
+
     def then(&block)
-      Fmap.call(self, &block)
+      @value, @type, @success = Core::AndThen.spawn(self, &block)
+
+      self
     end
     alias and_then then
     alias step then
     alias fmap then
 
-    def check(&block)
-      return self if !!block.call(@value)
+    def check(tag = nil, &block)
+      return self if !!block[@value]
 
-      failure!
+      failure!(nil, { type: tag || :error })
     end
 
-    def failure!(value = nil, type: :error)
-      @type = type.to_sym
+    def failure!(fvalue = nil, options = { type: :error })
+      options = extracted_options!(options)
+
+      @type = (options&.delete(:type) || :error)&.to_sym
       @success = false
-      @value = value
+      @value = fvalue
 
       self
     end
 
-    def success!(value = nil, type: :ok)
-      @type = type.to_sym
+    def success!(svalue = nil, options = {})
+      options = extracted_options!(options)
+
+      @type = (options&.delete(:type) || :ok).to_sym
       @success = true
-      @value = value
+      @value = svalue
 
       self
     end
+
+    def inspect
+      format(
+        '#<%<name>s success=%<success>s type=%<type>p value=%<value>p>',
+        name: self.class.name,
+        success: last.success?,
+        type: last.type,
+        value: last.unwrap
+      )
+    end
+    alias to_s inspect
   end
 end
