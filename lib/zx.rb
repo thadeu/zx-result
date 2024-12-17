@@ -16,7 +16,7 @@ module Zx
     end
   end
 
-  module Methods
+  module ClassMethods
     Success = ->(value = nil, options = {}) { Zx.Success(value, { type: :ok }.merge(options)) }
     Failure = ->(value = nil, options = {}) { Zx.Failure(value, { type: :error }.merge(options)) }
 
@@ -43,6 +43,6 @@ module Zx
     end
   end
 
-  include Methods
-  extend Methods
+  include ClassMethods
+  extend ClassMethods
 end
