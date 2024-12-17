@@ -2,25 +2,35 @@
 
 module Zx
   class Reflect
-    attr_reader :result, :tag
+    def self.apply(result, tag, &block)
+      new(result, tag).apply(&block)
+    end
 
-    def initialize(result, tag)
-      @result = result
+    attr_reader :stack, :tag
+
+    def initialize(stack, tag)
+      @stack = stack
       @tag = tag
     end
 
     def apply(&block)
       case tag
       when Symbol, String
-        return if result.type != tag.to_sym
+        return if stack.type != tag.to_sym
 
-        block.call(result.unwrap, [result.type, result.success?])
-        result.executed << block
+        reflect_callable(&block)
+        push_to_executed(block)
       end
     end
 
-    def self.apply(result, tag, &block)
-      new(result, tag).apply(&block)
+    def push_to_executed(block)
+      stack.executed << block
     end
+    private :push_to_executed
+
+    def reflect_callable(&block)
+      block.call(stack.unwrap, [stack.type, stack.success?])
+    end
+    private :reflect_callable
   end
 end
