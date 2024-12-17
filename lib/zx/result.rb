@@ -2,6 +2,12 @@
 
 module Zx
   class Result < Core::Base
+    class FailureError < StandardError; end
+
+    def value!
+      last&.value || raise(FailureError, 'value is empty')
+    end
+
     def first
       Core::Stack.first(self) || self
     end
@@ -46,9 +52,11 @@ module Zx
     end
 
     def otherwise(&block)
-      return if executed.size.positive?
+      return self if executed.size.positive?
 
       Reflect.apply(self, nil, &block)
+
+      self
     end
 
     def then(&block)
@@ -60,10 +68,10 @@ module Zx
     alias step then
     alias fmap then
 
-    def check(&block)
+    def check(tag = nil, &block)
       return self if !!block[@value]
 
-      failure!
+      failure!(nil, { type: tag || :error })
     end
 
     def failure!(fvalue = nil, options = { type: :error })

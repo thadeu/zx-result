@@ -14,13 +14,10 @@ module Zx
     end
 
     def apply(&block)
-      case tag
-      when Symbol, String
-        return if stack.type != tag.to_sym
+      return if !tag.nil? && stack.type != tag.to_sym
 
-        reflect_callable(&block)
-        push_to_executed(block)
-      end
+      reflect_callable(&block)
+      push_to_executed(block)
     end
 
     def push_to_executed(block)

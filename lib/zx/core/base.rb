@@ -3,8 +3,6 @@
 module Zx
   module Core
     class Base
-      class FailureError < StandardError; end
-
       def initialize
         @success = true
         @type = :ok
@@ -44,7 +42,7 @@ module Zx
       end
 
       def value!
-        last&.value || raise(FailureError, 'value is empty')
+        raise NotImplementedError
       end
 
       def unwrap

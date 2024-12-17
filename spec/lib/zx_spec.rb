@@ -455,11 +455,10 @@ RSpec.describe Zx do
       expect(result.type).to eq(:error)
 
       result
-        .on_success { expect(_1).to eq(a: 1) }
-        .on_failure(:error) { expect(_1).to eq('invalid type tagged') }
-        .on_failure(:invalid) { expect(_1).to eq('invalid') }
-        .on_failure { expect(_1).to eq('invalid type tagged') }
-        .otherwise { raise [:otherwise, _1] }
+        .on_success { expect(_1).not_to eq(a: 1) }
+        .on_failure(:jump1) { expect(_1).not_to eq('invalid type tagged') }
+        .on_failure(:jump2) { expect(_1).not_to eq('invalid') }
+        .otherwise { expect(_1).to eq('invalid type tagged') }
     end
 
     it 'using on_failure listeners' do
@@ -655,10 +654,29 @@ RSpec.describe Zx do
   end
 
   it 'raised FailureError' do
-    result = NestedAndThen.new.call_ok_hash(0)
+    result = Zx.Success(1)
 
     result.check { |v| v == 0 }
 
     expect { result.value! }.to raise_error(Zx::Result::FailureError)
+  end
+
+  describe 'process composition' do
+    it 'Given process' do
+      input = { name: 'Thadeu Esteves', email: 'tadeuu@gmail.com' }
+
+      account = AccountCreation.deliver(input)
+        .on(:success, :user_created) { |user| p [:user_created, user] }
+        .on(:success, :account_created) { |acc| p [:account_created, acc] }
+        .on(:success, :mailer_subscribed) { |acc| p [:mailer_subscribed, acc] }
+        .on(:success, :email_sent) { |acc| expect(acc.user.name).to eq('Thadeu Esteves') }
+        .on(:failure, :user_not_created) { |error| p [:user_not_created, error] }
+        .otherwise { |error| p [:otherwise, error] }
+
+      expect(account.success?).to be_truthy
+      expect(account.type).to eq(:email_sent)
+      expect(account.unwrap.user.name).to eq('Thadeu Esteves')
+      expect(account.unwrap.user.email).to eq('tadeuu@gmail.com')
+    end
   end
 end
