@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'zx/version'
-require 'zx/core'
 require 'zx/core/util/parameter'
 require 'zx/core/base'
 require 'zx/core/and_then'
