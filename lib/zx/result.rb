@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'core'
+
 module Zx
   class Result < Core::Base
     class FailureError < StandardError; end
