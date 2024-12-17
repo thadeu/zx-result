@@ -36,7 +36,7 @@ unreleased | https://github.com/thadeu/zx-result/blob/main/README.md
 
 | kind           | branch  | ruby               |
 | -------------- | ------- | ------------------ |
-| unreleased     | main    | >= 2.5.8, <= 3.1.x |
+| unreleased     | main    | >= 2.5.8, <= 3 |
 
 ## Installation
 
@@ -49,7 +49,7 @@ bundle add zx-result
 or add this line to your application's Gemfile.
 
 ```ruby
-gem 'zx-result'
+gem 'zx-result', '~> 0.1.0'
 ```
 
 and then, require module
@@ -65,6 +65,135 @@ Without configuration, because we use only Ruby. ❤️
 ## Usage
 
 You can use with many towards.
+
+### Given
+
+```ruby
+result = Zx.Given { Zx.Success(5) }
+result.success? #=> true
+result.failure? #=> false
+result.value #=> 5
+result.value! #=> 5 or raise
+result.error #=> nil or raises an exception
+```
+
+```ruby
+input = 5
+
+result = Zx.Given(input)
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .then{ |number| number + 5 }
+  .on_success{|number| number }
+```
+
+You can use `Given` to invoke other methods in the class, like this.
+
+```ruby
+class User
+  def self.create(name:, email:)
+    new(name:, email:).create
+  end
+
+  attr_reader :name, :email
+
+  def initialize(name:, email:)
+    @name = name
+    @email = email
+  end
+
+  def create
+    self
+  end
+end
+
+class Account
+  def self.create(user:)
+    new(user:).create
+  end
+
+  attr_reader :user
+
+  def initialize(user:)
+    @user = user
+  end
+
+  def create
+    self
+  end
+
+  def send_welcome_email!
+    true
+  end
+end
+
+class NewsletterMailer
+  def self.subscribe!(account:)
+    new(account:).subscribe!
+  end
+
+  attr_reader :account
+
+  def initialize(account:)
+    @account = account
+  end
+
+  def subscribe!
+    true
+  end
+end
+
+class AccountCreation
+  include Zx
+
+  def self.deliver(input)
+    new.deliver(input)
+  end
+
+  def deliver(input)
+    Given(input)
+      .and_then(&method(:create_user))
+      .and_then(&method(:create_account))
+      .and_then(&method(:subscribe_mailer))
+      .and_then(&method(:send_welcome_email!))
+  end
+
+  def create_user(input)
+    user = User.create(name: input[:name], email: input[:email])
+    Success(user:, type: :user_created)
+  end
+
+  def create_account(user:, **)
+    account = Account.create(user:)
+    Success(account:, type: :account_created)
+  end
+
+  def subscribe_mailer(account:, **)
+    NewsletterMailer.subscribe!(account:)
+    Success(account:, type: :mailer_subscribed)
+  end
+
+  def send_welcome_email!(account:, **)
+    account.send_welcome_email!
+    Success(account, type: :email_sent)
+  end
+end
+
+input = { name: 'Thadeu Esteves', email: 'tadeuu@gmail.com' }
+
+account = AccountCreation.deliver(input)
+  .on(:success, :user_created) { |user| p [:user_created, user] }
+  .on(:success, :account_created) { |acc| p [:account_created, acc] }
+  .on(:success, :mailer_subscribed) { |acc| p [:mailer_subscribed, acc] }
+  .on(:success, :email_sent) { |acc| p [:email_sent, acc] }
+  .on(:failure, :user_not_created) { |error| p [:user_not_created, error] }
+  .otherwise { |error| p [:otherwise, error] }
+
+expect(account.success?).to be_truthy
+expect(account.type).to eq(:email_sent)
+expect(account.unwrap.user.name).to eq('Thadeu Esteves')
+expect(account.unwrap.user.email).to eq('tadeuu@gmail.com')
+```
 
 ### Success
 
@@ -175,29 +304,40 @@ result.type #=> :integer
 ```ruby
 result = Zx.Success(5, type: :integer)
   .step{ |number| number + 5 }
-  .check { |number| number == 15 }
-  .on_failure{|error| puts error } #=> 10
+  .check(:number_valid) { |number| number == 15 }
+  .on_failure { |error| puts error } #=> 10
 ```
 
 ### Try
 
 ```ruby
-result = Zx.Try { 5 }
-  .step{ |number| number + 5 }
-  .check { |number| number == 15 }
-  .on_failure{|error| puts error } #=> 10
+result = Zx.Try { Zx.Success(5) }
+  .step { |number| number + 5 }
+  .check(:number_invalid) { |number| number == 15 }
+  .on_failure{ |error, (type)| puts [error, type] } # failure! because, number == 10, right?
+  .on_success{ |number| puts number }
 ```
 
-### Given
+```ruby
+result = Zx.Try { Zx.Success(10) }
+  .step { |number| number + 1 }
+  .then { |number| number + 1 }
+  .and_then { |number| number + 1 }
+  .fmap { |number| number + 1 }
+  .check(:number_invalid) { |number| number == 15 }
+  .on_failure{ |error, (type)| puts [:failure, error, type] }
+  .on_success{ |number| puts [:success, number] }
+```
 
 ```ruby
-input = 5
-
-result = Zx.Given(input)
-  .then{ |number| number + 5 }
-  .then{ |number| number + 5 }
-  .then{ |number| number + 5 }
-  .on_success{|number| number }
+result = Zx.Try { Zx.Failure(10) }
+  .step { |number| number + 1 }
+  .then { |number| number + 1 }
+  .and_then { |number| number + 1 }
+  .fmap { |number| number + 1 }
+  .check(:number_invalid) { |number| number == 15 }
+  .on_failure{ |error, (type)| puts [:failure, error, type] }
+  .on_success{ |number| puts [:success, number] }
 ```
 
 You can use one or multiples listeners in your result. We see some use cases.
@@ -232,34 +372,32 @@ result
   .on(:failure, :record_not_found) { expect(_1).to eq('not found user') }
 ```
 
-**Simple Inherit**
+**Match**
 
 ```ruby
-class AsInherited
-  include Zx
+result = AsIncluded.new.pass('save record!')
 
-  def pass(...)
-    Success(...)
-  end
+result.match(
+  Ok: ->(v) { [:ok, v] },
+  Err: ->(err) { raise [:err, err] }
+)
 
-  def passthrough(value)
-    Success[value]
-  end
+result.match(
+  Ok: -> { expect(_1).to eq(2) },
+  Err: -> { raise [:err, _1] }
+)
+```
 
-  def failed(error)
-    Failure(error, type: :error)
-  end
-end
+**Otherwise**
 
-result = AsInherited.new.pass('save record!')
+```ruby
+result = Zx.Failure('invalid type tagged')
 
 result
-  .on(:success, :success) { expect(_1).to eq(a: 1) }
-  .on(:success, :mailer) { expect(_1).to eq(a: 1) }
-  .on(:success, :persisted) { expect(_1).to eq('save record!') }
-  .on(:success) { |value, (type)| expect([value, type]).to eq(['save record!', :persisted]) }
-  .on(:failure, :error) { expect(_1).to eq('on error') }
-  .on(:failure, :record_not_found) { expect(_1).to eq('not found user') }
+  .on_success(:jump_this) { [:jump_this, _1] }
+  .on_failure(:jump_this1) { [:jump_this1, _1] }
+  .on_failure(:jump_this2) { [:jump_this2, _1] }
+  .otherwise { p [:otherwise, _1] }
 ```
 
 You can use directly methods, for example:
@@ -277,7 +415,7 @@ Zx:.Failure('error', type: :invalid)
 
 # or
 
-Zx::Failure[:invalid_user, 'user was not found']
+Zx::Failure['user was not found', { type: :invalid_user }]
 ```
 
 
