@@ -61,8 +61,12 @@ module Zx
       self
     end
 
-    def then(&block)
-      @value, @type, @success = Core::AndThen.spawn(self, &block)
+    def then(method_name = nil, *_pargs, &block)
+      @value, @type, @success = Core::AndThen.spawn(
+        self,
+        method_name,
+        &block
+      )
 
       self
     end
@@ -82,6 +86,7 @@ module Zx
       @type = (options&.delete(:type) || :error)&.to_sym
       @success = false
       @value = fvalue
+      @ctx = options.delete(:ctx) if @ctx.nil?
 
       self
     end
@@ -92,6 +97,7 @@ module Zx
       @type = (options&.delete(:type) || :ok).to_sym
       @success = true
       @value = svalue
+      @ctx = options.delete(:ctx)
 
       self
     end

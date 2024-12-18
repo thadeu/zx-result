@@ -149,6 +149,10 @@ class AccountCreation
   def self.deliver(input)
     new.deliver(input)
   end
+  
+  def self.deliver_with_sym(input)
+    new.deliver_with_sym(input)
+  end
 
   def deliver(input)
     Given(input)
@@ -156,6 +160,14 @@ class AccountCreation
       .and_then(&method(:create_account))
       .and_then(&method(:subscribe_mailer))
       .and_then(&method(:send_welcome_email!))
+  end
+  
+  def deliver_with_sym(input)
+    Given(input)
+      .and_then(:create_user)
+      .and_then(:create_account)
+      .and_then(:subscribe_mailer)
+      .and_then(:send_welcome_email!)
   end
 
   def create_user(input)

@@ -39,7 +39,7 @@ module Zx
     end
 
     def Given(input = nil, options = {}, &block)
-      Try(input, options, &block)
+      Try(input, options.merge(ctx: self), &block)
     end
   end
 

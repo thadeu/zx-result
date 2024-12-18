@@ -661,11 +661,30 @@ RSpec.describe Zx do
     expect { result.value! }.to raise_error(Zx::Result::FailureError)
   end
 
-  describe 'process composition' do
-    it 'Given process' do
+  describe 'process using method blocks' do
+    it 'returns a Given result' do
       input = { name: 'Thadeu Esteves', email: 'tadeuu@gmail.com' }
 
-      account = AccountCreation.deliver(input)
+      account = AccountCreation.create_with_method_blocks(input)
+        .on(:success, :user_created) { |user| p [:user_created, user] }
+        .on(:success, :account_created) { |acc| p [:account_created, acc] }
+        .on(:success, :mailer_subscribed) { |acc| p [:mailer_subscribed, acc] }
+        .on(:success, :email_sent) { |acc| expect(acc.user.name).to eq('Thadeu Esteves') }
+        .on(:failure, :user_not_created) { |error| p [:user_not_created, error] }
+        .otherwise { |error| p [:otherwise, error] }
+
+      expect(account.success?).to be_truthy
+      expect(account.type).to eq(:email_sent)
+      expect(account.unwrap.user.name).to eq('Thadeu Esteves')
+      expect(account.unwrap.user.email).to eq('tadeuu@gmail.com')
+    end
+  end
+
+  describe 'process methods symbols' do
+    it 'returns a Given result' do
+      input = { name: 'Thadeu Esteves', email: 'tadeuu@gmail.com' }
+
+      account = AccountCreation.create_with_method_symbols(input)
         .on(:success, :user_created) { |user| p [:user_created, user] }
         .on(:success, :account_created) { |acc| p [:account_created, acc] }
         .on(:success, :mailer_subscribed) { |acc| p [:mailer_subscribed, acc] }

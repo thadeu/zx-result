@@ -56,11 +56,15 @@ end
 class AccountCreation
   include Zx
 
-  def self.deliver(input)
-    new.deliver(input)
+  def self.create_with_method_blocks(input)
+    new.create_with_method_blocks(input)
   end
 
-  def deliver(input)
+  def self.create_with_method_symbols(input)
+    new.create_with_method_symbols(input)
+  end
+
+  def create_with_method_blocks(input)
     Given(input)
       .and_then(&method(:create_user))
       .and_then(&method(:create_account))
@@ -68,22 +72,30 @@ class AccountCreation
       .and_then(&method(:send_welcome_email!))
   end
 
+  def create_with_method_symbols(input)
+    Given(input)
+      .and_then(:create_user)
+      .and_then(:create_account)
+      .and_then(:subscribe_mailer)
+      .and_then(:send_welcome_email!)
+  end
+
   def create_user(input)
     user = User.create(name: input[:name], email: input[:email])
-    Success(user:, type: :user_created)
+    Success({ user: }, type: :user_created)
   end
 
-  def create_account(user:, **)
+  def create_account(user:)
     account = Account.create(user:)
-    Success(account:, type: :account_created)
+    Success({ account: }, type: :account_created)
   end
 
-  def subscribe_mailer(account:, **)
+  def subscribe_mailer(account:)
     NewsletterMailer.subscribe!(account:)
-    Success(account:, type: :mailer_subscribed)
+    Success({ account: }, type: :mailer_subscribed)
   end
 
-  def send_welcome_email!(account:, **)
+  def send_welcome_email!(account:)
     account.send_welcome_email!
     Success(account, type: :email_sent)
   end

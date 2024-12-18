@@ -3,6 +3,8 @@
 module Zx
   module Core
     class Base
+      attr_reader :ctx
+
       def initialize
         @success = true
         @type = :ok
